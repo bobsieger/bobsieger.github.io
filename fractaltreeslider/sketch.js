@@ -53,8 +53,8 @@ function tree(xi, yi, length, angle, angleBranch) {
 
     // Reduce branch length by 20%, using the growth slider to optionally
     // force asymmetric growth:
-    let newLengthR1 = 0.8 * length;
-    let newLengthR2 = (0.8 + symmetrySlider.value()) * length;
+    let newLengthR1 = (0.7 + symmetrySlider.value()) * length;
+    let newLengthR2 = (0.7 + symmetrySlider.value()) * length;
 
     // Recursively call the tree function for the left and right branches
     tree(xf, yf, newLengthR1, newAngleR1, angleBranch);
@@ -74,7 +74,7 @@ function sliders() {
     treeSlider = createSlider(1, maxTrees, 2, 1);
     treeSlider.position(150, windowHeight - 50);
 
-    symmetrySlider = createSlider(-0.4, -0.1, -0.2, 0.1);
+    symmetrySlider = createSlider(-0.1, 0.1, 0, 0.025);
     symmetrySlider.position(330, windowHeight - 50);
 
     heightSlider = createSlider(0.5, 1.5, 1.2, 0.1);
