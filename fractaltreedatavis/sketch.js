@@ -47,11 +47,10 @@ function setup() {
   // Generate Slider(s)
   sliders();
 
-  // manually invoked (ie: from a slider value change)
   // Turn off continuous redraw and let the mouse initiate the redraw
+  // (ie: from a slider value change)
   noLoop();
 
-  // Cap lines with a round end (ROUND/SQUARE/PROJECT) and
   // Cap lines with a long square end (ROUND/SQUARE/PROJECT) and
   // Join lines using a round (MITER/BEVEL/ROUND) style
   // strokeCap(PROJECT); strokeJoin(BEVEL);
