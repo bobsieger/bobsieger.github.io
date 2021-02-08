@@ -41,17 +41,18 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
-  // Set number of trees (one per continent)
+  // Calculate  number of trees (one per continent)
   continents = populationTable.getColumnCount() - 1;
 
   // Generate Slider(s)
   sliders();
 
-  // Turn off continuous redraw. A redraw will the only occur if
   // manually invoked (ie: from a slider value change)
+  // Turn off continuous redraw and let the mouse initiate the redraw
   noLoop();
 
   // Cap lines with a round end (ROUND/SQUARE/PROJECT) and
+  // Cap lines with a long square end (ROUND/SQUARE/PROJECT) and
   // Join lines using a round (MITER/BEVEL/ROUND) style
   // strokeCap(PROJECT); strokeJoin(BEVEL);
   strokeCap(PROJECT);
@@ -66,7 +67,8 @@ function draw() {
   sliders();
 
   // Set the random seed based on the year
-  randomSeed(yearSlider.value());
+  // randomSeed(yearSlider.value());
+  randomSeed(99);
 
   // Draw a tree for each continent and use -90° so that each tree points up
   for (let i = 1; i < continents + 1; i++) {
@@ -99,11 +101,6 @@ function tree(xi, yi, length, angle, branchAngle) {
     let xf = xi + cos(radians(angle)) * length;
     let yf = yi + sin(radians(angle)) * length;
 
-    // Add a leaf bud at the branch intersection
-    if (length > minSegment / 2) {
-      drawBud(xf, yf, weight);
-    }
-
     // Draw a line between initial and final x, y values
     stroke(50);
     strokeWeight(weight);
@@ -125,6 +122,7 @@ function tree(xi, yi, length, angle, branchAngle) {
     if (random([true, false])) {
       tree(xf, yf, newLengthR2, angle, branchAngle);
     }
+
   } else {
     // Draw a leaf at the end point as a fuzzy elipse
     colourLeaf(fillAlpha, strokeAlpha);
@@ -145,46 +143,54 @@ function colourLeaf(fAlpha, sAlpha) {
   country = country < dependencyTable.getColumnCount() ? country : 1;
 
   // Get the corresponding dependency ratio and divide by 10
-  p = parseInt(dependencyTable.getString(yearSlider.value() - 1960, country) / 10);
+  p = parseInt(dependencyTable.getString(yearSlider.value() - 1960, country) / 5);
 
   switch(p) {
-  case 0:
+  case 0:  // 0%
+  case 1:
+  case 2:
+  case 3:
+  case 4:
+  case 5:
+  case 6:
+  case 7:  // 35%
     fill(41, 106, 13, 20);
     stroke(41, 106, 13, 40);
     break;
-  case 1:
+  case 8:  // 40%
+  case 9:  // 45%
     fill(60, 142, 23, fAlpha);
     stroke(60, 142, 23, sAlpha);
     break;
-  case 2:
+  case 10:  // 50%
     fill(119, 171, 12, fAlpha);
     stroke(119, 171, 12, sAlpha);
     break;
-  case 3:
+  case 11:  // 55%
     fill(186, 198, 0, fAlpha);
     stroke(186, 198, 0, sAlpha);
     break;
-  case 4:
+  case 12:  // 60%
     fill(223, 221, 25, fAlpha);
     stroke(223, 221, 25, sAlpha);
     break;
-  case 5:
+  case 13:  // 65%
     fill(250, 214, 51, fAlpha);
     stroke(250, 214, 51, sAlpha);
     break;
-  case 6:
+  case 14:  // 70%
     fill(250, 183, 51, fAlpha);
     stroke(250, 183, 51, sAlpha);
     break;
-  case 7:
+  case 15:  // 75%
     fill(255, 161, 44, fAlpha);
     stroke(255, 161, 44, sAlpha);
     break;
-  case 8:
+  case 16:  // 80%
     fill(255, 135, 44, fAlpha);
     stroke(255, 135, 44, sAlpha);
     break;
-  case 9:
+  case 17:  // 85%
     fill(254, 97, 44, fAlpha);
     stroke(254, 97, 44, sAlpha);
     break;
@@ -196,28 +202,6 @@ function colourLeaf(fAlpha, sAlpha) {
 
   // Increment the country column number
   country++;
-}
-
-
-// Draw an optional leaf bud
-function drawBud(x, y, w) {
-
-  // Set colour and stroke size
-  colourLeaf(255, 255);
-  strokeWeight(w / 5);
-
-  // Optionally draw on either the left or the right
-  switch(parseInt(random(3))) {
-  case 0:
-    ellipse(x - w / 2, y, w / 2, w / 2);
-    break;
-  case 1:
-    ellipse(x + w / 2, y, w / 2, w / 2);
-    break;
-  default:
-    // Do nothing
-    break;
-  }
 }
 
 
@@ -260,7 +244,7 @@ function sliders() {
     // Label each tree with a continent name
     textAlign(CENTER);
     for (let i = 1; i < continents + 1; i++) {
-      text(populationTable.columns[i], i * width / (continents + 1), 0.9 * height);
+      text(populationTable.columns[i], i * width / (continents + 1), 0.91 * height);
     }
 
     // Add slider title
