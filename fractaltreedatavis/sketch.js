@@ -13,19 +13,20 @@
 
 // Tree rendering variables
 let fillAlpha = 20; strokeAlpha = 40;       // Determines leaf transparency
-let maxBranchAngle = 30;                    // Used with a random function
-let minTrunkWidth = 9; maxTrunkWidth = 25;  // Min/max trunk size
-let maxLeafWidth = 15, maxLeafHeight = 100; // Used with a random function
 let leftReduce = 0.75, rightReduce = 0.75;  // Segment size reduction
-let minSegment = 110,  maxSegment = 220;    // Min/max trunk lengths
+let maxBranchAngle = 30;                    // Used with a random function
+let maxLeafWidth = 40, maxLeafHeight = 100;  // Used with a random function
+let minSegment = 50,  maxSegment = 220;     // Min/max trunk lengths
+let minTrunkWidth = 11; maxTrunkWidth = 22; // Min/max trunk size
 
 // General variables
-let continents, country;
-let isSlider = false;
-let dependencyTable, populationTable;
 let afrTable, asiTable, eurTable, namTable, oceTable, samTable;
+let continents, country;
+let dependencyTable, populationTable;
+let isSlider = false;
+let xOffset = [];
 let yearSlider;
-let yearStart = 1960,   yearEnd = 2017;
+let yearStart = 1960, yearEnd = 2017;
 
 function preload() {
   populationTable = loadTable('../assets/population-by-continent.csv', 'csv', 'header');
@@ -42,13 +43,17 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
 
   // Calculate  number of trees (one per continent)
-  continents = populationTable.getColumnCount() - 1;
+  continents = populationTable.getColumnCount() - 2;
 
   // Generate Slider(s)
   sliders();
 
+  // Calculate tree x offset positions (currently equal spacing)
+  for (let i = 0; i < continents; i++) {
+    xOffset[i] = (i + 1) * width / (continents + 1);
+  }
+
   // Turn off continuous redraw and let the mouse initiate the redraw
-  // (ie: from a slider value change)
   noLoop();
 
   // Cap lines with a long square end (ROUND/SQUARE/PROJECT) and
@@ -70,15 +75,15 @@ function draw() {
   randomSeed(99);
 
   // Draw a tree for each continent and use -90° so that each tree points up
-  for (let i = 1; i < continents + 1; i++) {
+  for (let i = 0; i < continents; i++) {
 
     // Set the continent data to use for this tree
     setDependencyTable(i);
 
     // Invoke a recursive tree function, mapping the population of each
     // continent for a given year to a minimum and maximum tree segment
-    tree(i * width / (continents + 1), 0.88 * height,
-      map(populationTable.getString(yearSlider.value() - 1960, i), 300000000,
+    tree(xOffset[i], 0.88 * height,
+      map(populationTable.getString(yearSlider.value() - 1960, i + 1), 16000000,
         4500000000, minSegment, maxSegment), -90, maxBranchAngle);
   }
 }
@@ -125,7 +130,7 @@ function tree(xi, yi, length, angle, branchAngle) {
   } else {
     // Draw a leaf at the end point as a fuzzy elipse
     colourLeaf(fillAlpha, strokeAlpha);
-    ellipse(xi, yi + (maxLeafHeight / 6), random(5, maxLeafWidth), random(20, maxLeafHeight));
+    ellipse(xi, yi + (maxLeafHeight / 8), random(5, maxLeafWidth), random(20, maxLeafHeight));
   }
 }
 
@@ -141,62 +146,55 @@ function colourLeaf(fAlpha, sAlpha) {
   // Ensure that the country column number is within bounds
   country = country < dependencyTable.getColumnCount() ? country : 1;
 
-  // Get the corresponding dependency ratio and divide by 10
-  p = parseInt(dependencyTable.getString(yearSlider.value() - 1960, country) / 5);
+  // Get the corresponding dependency ratio (percentage) as an integer
+  p = parseInt(dependencyTable.getString(yearSlider.value() - 1960, country));
 
-  switch(p) {
-  case 0:  // 0%
-  case 1:
-  case 2:
-  case 3:
-  case 4:
-  case 5:
-  case 6:
-  case 7:  // 35%
-    fill(41, 106, 13, 20);
-    stroke(41, 106, 13, 40);
-    break;
-  case 8:  // 40%
-  case 9:  // 45%
-    fill(60, 142, 23, fAlpha);
-    stroke(60, 142, 23, sAlpha);
-    break;
-  case 10:  // 50%
-    fill(119, 171, 12, fAlpha);
-    stroke(119, 171, 12, sAlpha);
-    break;
-  case 11:  // 55%
-    fill(186, 198, 0, fAlpha);
-    stroke(186, 198, 0, sAlpha);
-    break;
-  case 12:  // 60%
-    fill(223, 221, 25, fAlpha);
-    stroke(223, 221, 25, sAlpha);
-    break;
-  case 13:  // 65%
-    fill(250, 214, 51, fAlpha);
-    stroke(250, 214, 51, sAlpha);
-    break;
-  case 14:  // 70%
-    fill(250, 183, 51, fAlpha);
-    stroke(250, 183, 51, sAlpha);
-    break;
-  case 15:  // 75%
-    fill(255, 161, 44, fAlpha);
-    stroke(255, 161, 44, sAlpha);
-    break;
-  case 16:  // 80%
-    fill(255, 135, 44, fAlpha);
-    stroke(255, 135, 44, sAlpha);
-    break;
-  case 17:  // 85%
-    fill(254, 97, 44, fAlpha);
-    stroke(254, 97, 44, sAlpha);
-    break;
-  default:
-    fill(253, 58, 45, fAlpha);
-    stroke(253, 58, 45, sAlpha);
-    break;
+  // The lower the dependency, the greener the tree
+  switch(true) {
+    case p < 35:
+      fill(41, 106, 13, 20);
+      stroke(41, 106, 13, 40);
+      break;
+    case p < 45:
+      fill(60, 142, 23, fAlpha);
+      stroke(60, 142, 23, sAlpha);
+      break;
+    case p < 50:
+      fill(119, 171, 12, fAlpha);
+      stroke(119, 171, 12, sAlpha);
+      break;
+    case p < 55:
+      fill(186, 198, 0, fAlpha);
+      stroke(186, 198, 0, sAlpha);
+      break;
+    case p < 60:
+      fill(223, 221, 25, fAlpha);
+      stroke(223, 221, 25, sAlpha);
+      break;
+    case p < 65:
+      fill(250, 214, 51, fAlpha);
+      stroke(250, 214, 51, sAlpha);
+      break;
+    case p < 70:
+      fill(250, 183, 51, fAlpha);
+      stroke(250, 183, 51, sAlpha);
+      break;
+    case p < 75:
+      fill(255, 161, 44, fAlpha);
+      stroke(255, 161, 44, sAlpha);
+      break;
+    case p < 80:
+      fill(255, 135, 44, fAlpha);
+      stroke(255, 135, 44, sAlpha);
+      break;
+    case p < 85:
+      fill(254, 97, 44, fAlpha);
+      stroke(254, 97, 44, sAlpha);
+      break;
+    default:
+      fill(253, 58, 45, fAlpha);
+      stroke(253, 58, 45, sAlpha);
+      break;
   }
 
   // Increment the country column number
@@ -208,27 +206,27 @@ function colourLeaf(fAlpha, sAlpha) {
 // initialize the country code
 function setDependencyTable(i) {
   switch(i) {
-  case 1:
-    dependencyTable = afrTable;
-    break;
-  case 2:
-    dependencyTable = asiTable;
-    break;
-  case 3:
-    dependencyTable = eurTable;
-    break;
-  case 4:
-    dependencyTable = namTable;
-    break;
-  case 5:
-    dependencyTable = oceTable;
-    break;
-  case 6:
-    dependencyTable = samTable;
-    break;
-  default:
-    console.log("Invalid dependency table id: " + i);
-    break;
+    case 0:
+      dependencyTable = afrTable;
+      break;
+    case 1:
+      dependencyTable = asiTable;
+      break;
+    case 2:
+      dependencyTable = eurTable;
+      break;
+    case 3:
+      dependencyTable = namTable;
+      break;
+    case 4:
+      dependencyTable = oceTable;
+      break;
+    case 5:
+      dependencyTable = samTable;
+      break;
+    default:
+      console.log("Invalid dependency table id: " + i);
+      break;
   }
 
   country = 1;
@@ -242,8 +240,8 @@ function sliders() {
 
     // Label each tree with a continent name
     textAlign(CENTER);
-    for (let i = 1; i < continents + 1; i++) {
-      text(populationTable.columns[i], i * width / (continents + 1), 0.91 * height);
+    for (let i = 0; i < continents; i++) {
+      text(populationTable.columns[i + 1], xOffset[i], 0.91 * height);
     }
 
     // Add slider title
