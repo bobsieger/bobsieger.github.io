@@ -13,9 +13,10 @@
 
 // Tree rendering variables
 let fillAlpha = 20; strokeAlpha = 40;       // Determines leaf transparency
+let finalSegment = 10;                       // Length of final segment
 let leftReduce = 0.75, rightReduce = 0.75;  // Segment size reduction
-let maxBranchAngle = 30;                    // Used with a random function
-let maxLeafWidth = 40, maxLeafHeight = 100;  // Used with a random function
+let maxBranchAngle = 50;                    // Used with a random function
+let maxLeafWidth = 40, maxLeafHeight = 100; // Used with a random function
 let minSegment = 50,  maxSegment = 220;     // Min/max trunk lengths
 let minTrunkWidth = 11; maxTrunkWidth = 22; // Min/max trunk size
 
@@ -24,11 +25,13 @@ let afrTable, asiTable, eurTable, namTable, oceTable, samTable;
 let continents, country;
 let dependencyTable, populationTable;
 let isSlider = false;
+let legend;
 let xOffset = [];
 let yearSlider;
 let yearStart = 1960, yearEnd = 2017;
 
 function preload() {
+  legend = loadImage('../assets/legend.png');
   populationTable = loadTable('../assets/population-by-continent.csv', 'csv', 'header');
   afrTable = loadTable('../assets/dependency-by-african-country.csv', 'csv', 'header');
   asiTable = loadTable('../assets/dependency-by-asian-country.csv', 'csv', 'header');
@@ -96,7 +99,7 @@ function draw() {
 // angle       - The angle of the tree segment
 // branchAngle - The maximum angle of the next set of branches
 function tree(xi, yi, length, angle, branchAngle) {
-  if (length > minTrunkWidth) {
+  if (length > finalSegment) {
     // The length of each segment ranges from a maximum of maxSegment to a minimum
     // of 3, which will correspond to a thickness of 15 and 0 respectively
     let weight = map(length, maxSegment, minTrunkWidth, maxTrunkWidth, 0);
@@ -152,8 +155,8 @@ function colourLeaf(fAlpha, sAlpha) {
   // The lower the dependency, the greener the tree
   switch(true) {
     case p < 35:
-      fill(41, 106, 13, 20);
-      stroke(41, 106, 13, 40);
+      fill(41, 106, 13, fAlpha);
+      stroke(41, 106, 13, sAlpha);
       break;
     case p < 45:
       fill(60, 142, 23, fAlpha);
@@ -233,30 +236,34 @@ function setDependencyTable(i) {
 }
 
 
-// Separate slider logic from recursive fractal tree logic
+// Separate slider & text logic from recursive fractal tree logic
 function sliders() {
   if (isSlider) {
     fill(0);
 
+    // Add a legend
+    image(legend, xOffset[continents - 1], 0.05 * height);
+
     // Label each tree with a continent name
-    textAlign(CENTER);
+    textAlign(CENTER); textSize(16); textStyle(BOLD);
     for (let i = 0; i < continents; i++) {
       text(populationTable.columns[i + 1], xOffset[i], 0.91 * height);
     }
 
     // Add slider title
-    textAlign(LEFT);
-    text('Age Dependency Ratio for ' + yearSlider.value(), windowWidth / 20,
-      windowHeight * 0.935);
+    textAlign(LEFT); textSize(12);
+    text('Age Dependency Ratio for ' + yearSlider.value(), width / 20,
+      height * 0.935);
 
     // All slider markings
-    for (let i = 1; i < (yearEnd - yearStart); i++) {
-      text('+', i * windowWidth / 20, windowHeight * 0.95);
+    fill('#0274FF'); textAlign(CENTER); textSize(10); textStyle(ITALIC);
+    for (let i = 1; i < 20; i++) {
+      text(yearStart + 3 * (i - 1), i * width / 20, height * 0.95);
     }
   } else {
     yearSlider = createSlider(yearStart, yearEnd, yearStart, 1);
-    yearSlider.position(windowWidth / 20, windowHeight * 0.95);
-    yearSlider.style('width', (windowWidth * 0.9) + 'px');
+    yearSlider.position(width / 20, height * 0.95);
+    yearSlider.style('width', (width * 0.9) + 'px');
 
     isSlider = true;
   }
