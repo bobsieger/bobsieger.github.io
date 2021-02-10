@@ -12,16 +12,17 @@
 //jshint esversion:6
 
 // Tree rendering variables
-let fillAlpha = 20; strokeAlpha = 40;       // Determines leaf transparency
-let finalSegment = 10;                       // Length of final segment
-let leftReduce = 0.75, rightReduce = 0.75;  // Segment size reduction
-let maxBranchAngle = 50;                    // Used with a random function
+let fillAlpha = 15;                         // Determines leaf transparency
+let finalSegment = 10;                      // Length of final segment
+let leftReduce = 0.8, rightReduce = 0.8;    // Segment size reduction
+let maxBranchAngle = 35;                    // Used with a random function
 let maxLeafWidth = 40, maxLeafHeight = 100; // Used with a random function
-let minSegment = 50,  maxSegment = 220;     // Min/max trunk lengths
+let minSegment = 35,  maxSegment = 180;     // Min/max trunk lengths
 let minTrunkWidth = 11; maxTrunkWidth = 22; // Min/max trunk size
 
 // General variables
 let afrTable, asiTable, eurTable, namTable, oceTable, samTable;
+let c1, c2;
 let continents, country;
 let dependencyTable, populationTable;
 let isSlider = false;
@@ -45,16 +46,23 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
+  // Set background colours
+  c1 = color(9, 59, 102);
+  c2 = color (200, 212, 222);
+
   // Calculate  number of trees (one per continent)
   continents = populationTable.getColumnCount() - 2;
 
   // Generate Slider(s)
-  sliders();
+  labels();
 
-  // Calculate tree x offset positions (currently equal spacing)
-  for (let i = 0; i < continents; i++) {
-    xOffset[i] = (i + 1) * width / (continents + 1);
-  }
+  // Specify tree x offset positions (currently equal spacing)
+  xOffset[0] = 4 * width / (continents + 1);  // Asia
+  xOffset[1] = 6 * width / (continents + 1);  // Africa
+  xOffset[2] = 3 * width / (continents + 1);  // Europe
+  xOffset[3] = 1 * width / (continents + 1);  // North America
+  xOffset[4] = 5 * width / (continents + 1);  // Oceana
+  xOffset[5] = 2 * width / (continents + 1);  // South America
 
   // Turn off continuous redraw and let the mouse initiate the redraw
   noLoop();
@@ -68,10 +76,10 @@ function setup() {
 
 
 function draw() {
-  background('#f9f7f7');
+  background(255);
 
-  // Draw slider labels
-  sliders();
+  // Draw labels, sliders, and background
+  labels();
 
   // Set the random seed based on the year
   // randomSeed(yearSlider.value());
@@ -132,7 +140,7 @@ function tree(xi, yi, length, angle, branchAngle) {
 
   } else {
     // Draw a leaf at the end point as a fuzzy elipse
-    colourLeaf(fillAlpha, strokeAlpha);
+    colourLeaf(fillAlpha);
     ellipse(xi, yi + (maxLeafHeight / 8), random(5, maxLeafWidth), random(20, maxLeafHeight));
   }
 }
@@ -140,11 +148,7 @@ function tree(xi, yi, length, angle, branchAngle) {
 
 // Determine the leaf colour based on the age dependency ratio, given:
 // fAlpha - Fill alpha (transparency)
-// sAlpha - Stroke alpha (transparency)
-function colourLeaf(fAlpha, sAlpha) {
-  // fill(random(100, 120), random(165, 185), random(130, 150), 20);
-  // stroke(random(100, 120), random(165, 185), random(130, 150), 40);
-  strokeWeight(0);
+function colourLeaf(fAlpha) {
 
   // Ensure that the country column number is within bounds
   country = country < dependencyTable.getColumnCount() ? country : 1;
@@ -152,51 +156,43 @@ function colourLeaf(fAlpha, sAlpha) {
   // Get the corresponding dependency ratio (percentage) as an integer
   p = parseInt(dependencyTable.getString(yearSlider.value() - 1960, country));
 
+  // No stroke
+  noStroke();
+
   // The lower the dependency, the greener the tree
   switch(true) {
     case p < 35:
       fill(41, 106, 13, fAlpha);
-      stroke(41, 106, 13, sAlpha);
       break;
     case p < 45:
       fill(60, 142, 23, fAlpha);
-      stroke(60, 142, 23, sAlpha);
       break;
     case p < 50:
       fill(119, 171, 12, fAlpha);
-      stroke(119, 171, 12, sAlpha);
       break;
     case p < 55:
       fill(186, 198, 0, fAlpha);
-      stroke(186, 198, 0, sAlpha);
       break;
     case p < 60:
       fill(223, 221, 25, fAlpha);
-      stroke(223, 221, 25, sAlpha);
       break;
     case p < 65:
       fill(250, 214, 51, fAlpha);
-      stroke(250, 214, 51, sAlpha);
       break;
     case p < 70:
       fill(250, 183, 51, fAlpha);
-      stroke(250, 183, 51, sAlpha);
       break;
     case p < 75:
       fill(255, 161, 44, fAlpha);
-      stroke(255, 161, 44, sAlpha);
       break;
     case p < 80:
       fill(255, 135, 44, fAlpha);
-      stroke(255, 135, 44, sAlpha);
       break;
     case p < 85:
       fill(254, 97, 44, fAlpha);
-      stroke(254, 97, 44, sAlpha);
       break;
     default:
       fill(253, 58, 45, fAlpha);
-      stroke(253, 58, 45, sAlpha);
       break;
   }
 
@@ -210,10 +206,10 @@ function colourLeaf(fAlpha, sAlpha) {
 function setDependencyTable(i) {
   switch(i) {
     case 0:
-      dependencyTable = afrTable;
+      dependencyTable = asiTable;
       break;
     case 1:
-      dependencyTable = asiTable;
+      dependencyTable = afrTable;
       break;
     case 2:
       dependencyTable = eurTable;
@@ -237,12 +233,20 @@ function setDependencyTable(i) {
 
 
 // Separate slider & text logic from recursive fractal tree logic
-function sliders() {
+function labels() {
+
+  // If sliders have already been defined
   if (isSlider) {
-    fill(0);
+    // Add a top to bottom gradient background
+    strokeWeight(1);
+    for (let i = 0; i < height; i++) {
+      stroke(lerpColor(c1, c2, i / float(height)));
+      line(0, i, width, i);
+    }
 
     // Add a legend
-    image(legend, xOffset[continents - 1], 0.05 * height);
+    fill(0);
+    image(legend, 0, 0.05 * height);
 
     // Label each tree with a continent name
     textAlign(CENTER); textSize(16); textStyle(BOLD);
@@ -253,7 +257,7 @@ function sliders() {
     // Add slider title
     textAlign(LEFT); textSize(12);
     text('Age Dependency Ratio for ' + yearSlider.value(), width / 20,
-      height * 0.935);
+      height * 0.93);
 
     // All slider markings
     fill('#0274FF'); textAlign(CENTER); textSize(10); textStyle(ITALIC);
@@ -261,6 +265,8 @@ function sliders() {
       text(yearStart + 3 * (i - 1), i * width / 20, height * 0.95);
     }
   } else {
+
+    // First call only defines sliders
     yearSlider = createSlider(yearStart, yearEnd, yearStart, 1);
     yearSlider.position(width / 20, height * 0.95);
     yearSlider.style('width', (width * 0.9) + 'px');
