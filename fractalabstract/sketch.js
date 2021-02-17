@@ -12,12 +12,14 @@
 //jshint esversion:6
 
 // Tree rendering variables
-let fillAlpha = 80;                         // Determines leaf transparency
-let finalSegment = 10;                      // Length of final segment
-let leftReduce = 0.8, rightReduce = 0.8;    // Segment size reduction
-let maxBranchAngle = 45;                    // Used with a random function
-let maxLeafWidth = 7, maxLeafHeight = 100; // Used with a random function
-let minSegment = 35,  maxSegment = 145;     // Min/max trunk lengths
+const fillAlpha = 150;                        // Determines leaf transparency
+const finalSegment = 10;                      // Length of final segment
+const leftReduce = 0.3, rightReduce = 0.96;   // Segment size reduction
+const maxBranchAngle = 135;                   // Used with a random function
+const maxLeafWidth = 20, maxLeafHeight = 40;  // Used with a random function
+const minSegment = 33,  maxSegment = 200;     // Min/max trunk lengths
+const minTrunkWidth = 1; maxTrunkWidth = 3;   // Min/max trunk size
+const rightAngle = 40;
 
 // General variables
 let afrTable, asiTable, eurTable, namTable, oceTable, samTable;
@@ -25,7 +27,7 @@ let c1, c2;
 let continents, country;
 let currentTable, dependencyTable, populationTable;
 let isSlider = false;
-let legend;
+let legend, world;
 let xOffset = [];
 let yearSlider;
 let yearStart = 1960, yearEnd = 2017;
@@ -48,18 +50,16 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
 
   // Set background colours
-  // c1 = color(9, 59, 102);
-  // c2 = color (200, 212, 222);
   c1 = color(36, 63, 255);
   c2 = color (255, 144, 34);
 
-  // Calculate number of trees (one per continent)
+  // Calculate  number of trees (one per continent)
   continents = populationTable.getColumnCount() - 2;
 
   // Generate Slider(s)
   labels();
 
-  // Specify tree x offset positions (currently equal spacing)
+  // Specify tree x offset positions
   xOffset[0] = 4 * width / (continents + 1);  // Asia
   xOffset[1] = 6 * width / (continents + 1);  // Africa
   xOffset[2] = 3 * width / (continents + 1);  // Europe
@@ -95,7 +95,7 @@ function draw() {
     // continent for a given year to a minimum and maximum tree segment
     tree(xOffset[i], height * 0.8,
       map(populationTable.getString(yearSlider.value() - 1960, i + 1), 16000000,
-        4500000000, minSegment, maxSegment), -90, maxBranchAngle);
+        4500000000, minSegment, maxSegment), -150, maxBranchAngle);
   }
 }
 
@@ -108,48 +108,57 @@ function draw() {
 // branchAngle - The maximum angle of the next set of branches
 function tree(xi, yi, length, angle, branchAngle) {
   if (length > finalSegment) {
+    // The length of each segment ranges from a minimum to a maximum value,
+    // which will correspond to a minimum and maximum trunk thickness
+    let weight = map(length, minSegment, maxSegment, minTrunkWidth, maxTrunkWidth);
 
     // Calculate the final x,y values
     let xf = xi + cos(radians(angle)) * length;
     let yf = yi + sin(radians(angle)) * length;
 
     // Draw a line between initial and final x, y values
+    // noStroke();
+    stroke(50);
+    strokeWeight(weight);
     line(xi, yi, xf, yf);
 
     // Randomly determine new branch angles:
-    let newAngleR1 = angle - random(7, branchAngle);
-    let newAngleR2 = angle + random(7, branchAngle);
+    let newAngleL = angle - random(7, branchAngle);
+    let newAngleR = angle + rightAngle;
 
     // Reduce branch length by a percentage
-    let newLengthR1 = leftReduce * length;
-    let newLengthR2 = rightReduce * length;
+    let newLengthL = leftReduce * length;
+    let newLengthR = rightReduce * length;
 
     // Recursively call the tree function for the left and right branches
-    tree(xf, yf, newLengthR1, newAngleR1, branchAngle);
-    tree(xf, yf, newLengthR2, newAngleR2, branchAngle);
+    tree(xf, yf, newLengthL, newAngleL, branchAngle);
+    tree(xf, yf, newLengthR, newAngleR, branchAngle);
 
-    // Randomly add a third branch
-    if (random([true, false])) {
-      tree(xf, yf, newLengthR2, angle, branchAngle);
+    // Add a third branch in the centre sections
+    if (newLengthL < minSegment) {
+      tree(xf, yf, newLengthL, angle, branchAngle);
     }
 
   }
 
   // Draw a leaf at the end point as a fuzzy elipse
-  setColour(fillAlpha);
+  colourLeaf(fillAlpha);
   ellipse(xi, yi + (maxLeafHeight / 8), random(5, maxLeafWidth), random(20, maxLeafHeight));
 }
 
 
 // Determine the leaf colour based on the age dependency ratio, given:
 // fAlpha - Fill alpha (transparency)
-function setColour(fAlpha) {
+function colourLeaf(fAlpha) {
 
   // Ensure that the country column number is within bounds
   country = country < currentTable.getColumnCount() ? country : 1;
 
   // Get the corresponding dependency ratio (percentage) as an integer
   let p = parseInt(currentTable.getString(yearSlider.value() - 1960, country));
+
+  // No stroke
+  noStroke();
 
   // The lower the dependency, the greener the tree
   switch(true) {
@@ -198,7 +207,7 @@ function drawRod(i) {
 
   // Base height and width on the population of the continent
   let rodHeight = map(populationTable.getString(yearSlider.value() - 1960, i + 1), 16000000,
-    4500000000, 5 * minSegment, 5 * maxSegment);
+    4500000000, 4 * minSegment, 4 * maxSegment);
   let rodWidth = asclepius.width * rodHeight / asclepius.height;
 
   // Get the dependency percentage and transparency base
@@ -274,7 +283,6 @@ function labels() {
       stroke(lerpColor(c1, c2, i / float(height)));
       line(0, i, width, i);
     }
-    noStroke();
 
     // Add a legend
     fill(0);
