@@ -9,15 +9,13 @@
 
 //jshint esversion:6
 
-const N = 20;               // Number of vertex control points in the points array
+const N = 3;               // Number of vertex control points in the points array
 
-let colours = [];          // Array of vertex colours
-let current, next;         // Current and next
-// let percent = 0.618033989; // lerp percentage
-let percent = 0.5; // lerp percentage
+let current = [], next;    // Current and next random point
+let percent = 0.5;         // lerp percentage
 let points = [];           // Array of fixed vertex control points
 
-let minSegment = 35,  maxSegment = 145;     // Min/max trunk lengths
+let minHeight = 35,  maxHeight = 145;     // Min/max icon height
 
 // General variables
 let afrTable, asiTable, eurTable, namTable, oceTable, samTable;
@@ -30,8 +28,9 @@ let xOffset = [];
 let yearSlider;
 let yearStart = 1960, yearEnd = 2017;
 
+// Load dependency data tables
 function preload() {
-  asclepius = loadImage('../assets/asclepius1.png');
+  icon = loadImage('../assets/asclepius1.png');
   legend = loadImage('../assets/legend.png');
   dependencyTable = loadTable('../assets/dependency-by-continent.csv', 'csv', 'header');
   populationTable = loadTable('../assets/population-by-continent.csv', 'csv', 'header');
@@ -43,6 +42,7 @@ function preload() {
   samTable = loadTable('../assets/dependency-by-samerican-country.csv', 'csv', 'header');
 }
 
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
@@ -50,13 +50,13 @@ function setup() {
   c1 = color(36, 63, 255);
   c2 = color (255, 144, 34);
 
-  // Calculate number of trees (one per continent)
+  // Calculate number of icons (one per continent)
   continents = populationTable.getColumnCount() - 2;
 
   // Generate Slider(s)
   labels();
 
-  // Specify tree x offset positions (currently equal spacing)
+  // Specify icon x offset positions (currently equal spacing)
   xOffset[0] = 4 * width / (continents + 1);  // Asia
   xOffset[1] = 6 * width / (continents + 1);  // Africa
   xOffset[2] = 3 * width / (continents + 1);  // Europe
@@ -64,56 +64,31 @@ function setup() {
   xOffset[4] = 5 * width / (continents + 1);  // Oceana
   xOffset[5] = 2 * width / (continents + 1);  // South America
 
-  // Create N equidistant vertex control points in a circle
-  for (let i = 0; i < N; i++) {
-    let angle = (i * TWO_PI) / N + HALF_PI;
-
-    // Set the size of the fractal
-    let v = p5.Vector.fromAngle(angle, width / 16);
-
-    // Set the position of the fractal midpoint
-    v.add(4 * width / (continents + 1), height / 2);
-
-    // Add to points array
-    points.push(v);
-  }
-  /*
-  let v = p5.Vector.fromAngle(radians(-120), width / 12);
-  v.add(4 * width / (continents + 1), height / 2); points.push(v);
-  v = p5.Vector.fromAngle(radians(-60), width / 12);
-  v.add(4 * width / (continents + 1), height / 2); points.push(v);
-  v = p5.Vector.fromAngle(radians(90), width / 6);
-  v.add(4 * width / (continents + 1), height / 2); points.push(v);
-  */
-
-  // Select a current point
-  current = createVector(width / 2, height / 2);
+  // Create N equidistant vertex control points in a circle for each continent
+  setPoints();
 
   // Draw labels, sliders, and background
   labels();
-
-  // Set the random seed based on the year
-  // randomSeed(yearSlider.value());
-  randomSeed(99);
 }
+
 
 function draw() {
 
-  // Draw a tree for each continent and use -90° so that each tree points up
+  // Draw a icon for each continent
   for (let i = 0; i < continents; i++) {
 
-    // Set the continent data to use for this tree
+    // Set the continent data to use for this icon
     setCurrentTable(i);
 
-    // Add Rods of Asclepius
-    drawRod(i);
-  }
+    // Add a representative icon
+    drawIcon(i);
 
-  for (let i = 0; i < 1000; i++) {
-    next = floor(random(N));
-    current = p5.Vector.lerp(current, points[next], percent);
-    setColour();
-    point(current.x, current.y);
+    for (let j = 0; j < 1000; j++) {
+      next = floor(random(N));
+      current[i] = p5.Vector.lerp(current[i], points[i][next], percent);
+      setColour();
+      point(current[i].x, current[i].y);
+    }
   }
 }
 
@@ -127,7 +102,7 @@ function setColour() {
   // Get the corresponding dependency ratio (percentage) as an integer
   let p = parseInt(currentTable.getString(yearSlider.value() - 1960, country));
 
-  // The lower the dependency, the greener the tree
+  // The lower the dependency, the greener the icon
   switch(true) {
     case p < 35:
       stroke(41, 106, 13);
@@ -169,13 +144,41 @@ function setColour() {
 }
 
 
-// Draw Rod of Asclepius
-function drawRod(i) {
+// Create N equidistant vertex control points in a circle for each continent
+function setPoints() {
+
+  for (let i = 0; i < continents; i++) {
+
+    points[i] = [];
+
+    for (let j = 0; j < N; j++) {
+      let angle = (j * TWO_PI) / N + HALF_PI;
+
+      // Set the size of the fractal
+      let v = p5.Vector.fromAngle(angle,
+        map(populationTable.getString(yearSlider.value() - 1960, i + 1),
+        16000000, 4500000000, width / 16, width / 8));
+
+      // Set the position of the fractal midpoint
+      v.add(xOffset[i], height / 2);
+
+      // Add to points array
+      points[i][j] = v;
+    }
+
+    // Select a current point
+    current[i] = createVector(xOffset[i], height / 2);
+  }
+}
+
+
+// Draw icon
+function drawIcon(i) {
 
   // Base height and width on the population of the continent
-  let rodHeight = map(populationTable.getString(yearSlider.value() - 1960, i + 1), 16000000,
-    4500000000, 5 * minSegment, 5 * maxSegment);
-  let rodWidth = asclepius.width * rodHeight / asclepius.height;
+  let iconHeight = map(populationTable.getString(yearSlider.value() - 1960, i + 1), 16000000,
+    4500000000, 5 * minHeight, 5 * maxHeight);
+  let iconWidth = icon.width * iconHeight / icon.height;
 
   // Get the dependency percentage and transparency base
   let p = dependencyTable.getString(yearSlider.value() - 1960, i + 1);
@@ -203,7 +206,7 @@ function drawRod(i) {
       break;
   }
 
-  image(asclepius, xOffset[i] - rodWidth / 2, height * 0.88 - rodHeight, rodWidth, rodHeight);
+  image(icon, xOffset[i] - iconWidth / 2, height * 0.88 - iconHeight, iconWidth, iconHeight);
   tint(255, 255);
 }
 
@@ -239,7 +242,7 @@ function setCurrentTable(i) {
 }
 
 
-// Separate slider & text logic from recursive fractal tree logic
+// Separate slider & text logic from recursive fractal icon logic
 function labels() {
 
   // If sliders have already been defined
@@ -255,7 +258,7 @@ function labels() {
     fill(0);
     image(legend, 0, 0.05 * height);
 
-    // Label each tree with a continent name
+    // Label each icon with a continent name
     textAlign(CENTER); textSize(16); textStyle(BOLD);
     for (let i = 0; i < continents; i++) {
       text(populationTable.columns[i + 1], xOffset[i], 0.91 * height);
@@ -286,5 +289,6 @@ function labels() {
 function mouseReleased() {
   // The redraw() function makes draw() execute once
   labels();
+  setPoints();
   redraw();
 }
