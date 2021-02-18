@@ -15,7 +15,7 @@ let current = [], next;    // Current and next random point
 let percent = 0.5;         // lerp percentage
 let points = [];           // Array of fixed vertex control points
 
-let minHeight = 35,  maxHeight = 145;     // Min/max icon height
+let minHeight = 35,  maxHeight = 180;     // Min/max fractal height
 
 // General variables
 let afrTable, asiTable, eurTable, namTable, oceTable, samTable;
@@ -30,7 +30,7 @@ let yearStart = 1960, yearEnd = 2017;
 
 // Load dependency data tables
 function preload() {
-  icon = loadImage('../assets/asclepius1.png');
+  icon = loadImage('../assets/icon.png');
   legend = loadImage('../assets/legend.png');
   dependencyTable = loadTable('../assets/dependency-by-continent.csv', 'csv', 'header');
   populationTable = loadTable('../assets/population-by-continent.csv', 'csv', 'header');
@@ -175,11 +175,6 @@ function setPoints() {
 // Draw icon
 function drawIcon(i) {
 
-  // Base height and width on the population of the continent
-  let iconHeight = map(populationTable.getString(yearSlider.value() - 1960, i + 1), 16000000,
-    4500000000, 5 * minHeight, 5 * maxHeight);
-  let iconWidth = icon.width * iconHeight / icon.height;
-
   // Get the dependency percentage and transparency base
   let p = dependencyTable.getString(yearSlider.value() - 1960, i + 1);
   let t = 40;
@@ -206,7 +201,7 @@ function drawIcon(i) {
       break;
   }
 
-  image(icon, xOffset[i] - iconWidth / 2, height * 0.88 - iconHeight, iconWidth, iconHeight);
+  image(icon, xOffset[i] - icon.width / 2, height * 0.88 - icon.height);
   tint(255, 255);
 }
 
@@ -290,5 +285,4 @@ function mouseReleased() {
   // The redraw() function makes draw() execute once
   labels();
   setPoints();
-  redraw();
 }
