@@ -26,6 +26,7 @@ let continents, country;
 let currentTable, dependencyTable, populationTable;
 let isSlider = false;
 let legend;
+let scale;
 let xOffset = [];
 let yearSlider;
 let yearStart = 1960, yearEnd = 2017;
@@ -47,9 +48,10 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
+  // Original work was on a 969 high pixel display
+  scale = height / 969.0;
+
   // Set background colours
-  // c1 = color(9, 59, 102);
-  // c2 = color (200, 212, 222);
   c1 = color(36, 63, 255);
   c2 = color (255, 144, 34);
 
@@ -83,6 +85,7 @@ function draw() {
   randomSeed(99);
 
   // Draw a tree for each continent and use -90° so that each tree points up
+  noStroke();
   for (let i = 0; i < continents; i++) {
 
     // Set the continent data to use for this tree
@@ -197,9 +200,9 @@ function setColour(fAlpha) {
 function drawRod(i) {
 
   // Base height and width on the population of the continent
-  let rodHeight = map(populationTable.getString(yearSlider.value() - 1960, i + 1), 16000000,
+  let rodHeight = scale * map(populationTable.getString(yearSlider.value() - 1960, i + 1), 16000000,
     4500000000, 5 * minSegment, 5 * maxSegment);
-  let rodWidth = asclepius.width * rodHeight / asclepius.height;
+  let rodWidth = scale * asclepius.width * rodHeight / asclepius.height;
 
   // Get the dependency percentage and transparency base
   let p = dependencyTable.getString(yearSlider.value() - 1960, i + 1);
@@ -274,11 +277,10 @@ function labels() {
       stroke(lerpColor(c1, c2, i / float(height)));
       line(0, i, width, i);
     }
-    noStroke();
 
     // Add a legend
-    fill(0);
-    image(legend, 0, 0.05 * height);
+    fill(0); stroke(0);
+    image(legend, 0.005 * width, 0.03 * height, scale * legend.width, scale * legend.height);
 
     // Label each tree with a continent name
     textAlign(CENTER); textSize(16); textStyle(BOLD);
@@ -286,10 +288,12 @@ function labels() {
       text(populationTable.columns[i + 1], xOffset[i], 0.91 * height);
     }
 
-    // Add slider title
-    textAlign(LEFT); textSize(12);
+    // Add title
+    fill(255); textAlign(LEFT); textSize(22);
     text('Age Dependency Ratio for ' + yearSlider.value(), width / 20,
-      height * 0.93);
+      height * 0.05);
+    textSize(12);
+    text('(Size of Fractal is Proportional to the Population)', width / 20, height * 0.07);
 
     // All slider markings
     fill('#0274FF'); textAlign(CENTER); textSize(10); textStyle(ITALIC);
