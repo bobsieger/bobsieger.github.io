@@ -16,7 +16,7 @@ let fillAlpha = 80;                         // Determines leaf transparency
 let finalSegment = 10;                      // Length of final segment
 let leftReduce = 0.8, rightReduce = 0.8;    // Segment size reduction
 let maxBranchAngle = 45;                    // Used with a random function
-let maxLeafWidth = 7, maxLeafHeight = 100; // Used with a random function
+let maxLeafWidth = 7, maxLeafHeight = 100;  // Used with a random function
 let minSegment = 35,  maxSegment = 145;     // Min/max trunk lengths
 
 // General variables
@@ -31,7 +31,7 @@ let yearSlider;
 let yearStart = 1960, yearEnd = 2017;
 
 function preload() {
-  asclepius = loadImage('../assets/asclepius1.png');
+  asclepius = loadImage('../assets/asclepius.png');
   legend = loadImage('../assets/legend.png');
   dependencyTable = loadTable('../assets/dependency-by-continent.csv', 'csv', 'header');
   populationTable = loadTable('../assets/population-by-continent.csv', 'csv', 'header');

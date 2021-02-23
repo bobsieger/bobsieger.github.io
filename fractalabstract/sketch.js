@@ -33,7 +33,7 @@ let yearSlider;
 let yearStart = 1960, yearEnd = 2017;
 
 function preload() {
-  asclepius = loadImage('../assets/asclepius1.png');
+  asclepius = loadImage('../assets/asclepius.png');
   legend = loadImage('../assets/legend.png');
   dependencyTable = loadTable('../assets/dependency-by-continent.csv', 'csv', 'header');
   populationTable = loadTable('../assets/population-by-continent.csv', 'csv', 'header');
