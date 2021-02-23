@@ -18,6 +18,7 @@ let leftReduce = 0.8, rightReduce = 0.8;    // Segment size reduction
 let maxBranchAngle = 45;                    // Used with a random function
 let maxLeafWidth = 7, maxLeafHeight = 100;  // Used with a random function
 let minSegment = 35,  maxSegment = 145;     // Min/max trunk lengths
+let minTrunkWidth = 11; maxTrunkWidth = 22; // Min/max trunk size
 
 // General variables
 let afrTable, asiTable, eurTable, namTable, oceTable, samTable;
@@ -92,11 +93,11 @@ function draw() {
     setCurrentTable(i);
 
     // Add Rods of Asclepius
-    drawRod(i);
+    // drawRod(i);
 
     // Invoke a recursive tree function, mapping the population of each
     // continent for a given year to a minimum and maximum tree segment
-    tree(xOffset[i], height * 0.8,
+    tree(xOffset[i], height * 0.85,
       map(populationTable.getString(yearSlider.value() - 1960, i + 1), 16000000,
         4500000000, minSegment, maxSegment), -90, maxBranchAngle);
   }
@@ -112,11 +113,15 @@ function draw() {
 function tree(xi, yi, length, angle, branchAngle) {
   if (length > finalSegment) {
 
+    let weight = map(length, maxSegment, minTrunkWidth, maxTrunkWidth, 0);
+
     // Calculate the final x,y values
     let xf = xi + cos(radians(angle)) * length;
     let yf = yi + sin(radians(angle)) * length;
 
     // Draw a line between initial and final x, y values
+    stroke(50);
+    strokeWeight(weight);
     line(xi, yi, xf, yf);
 
     // Randomly determine new branch angles:
@@ -136,11 +141,11 @@ function tree(xi, yi, length, angle, branchAngle) {
       tree(xf, yf, newLengthR2, angle, branchAngle);
     }
 
+  } else {
+    // Draw a leaf at the end point as a fuzzy elipse
+    setColour(fillAlpha);
+    ellipse(xi, yi + (maxLeafHeight / 8), random(5, maxLeafWidth), random(20, maxLeafHeight));
   }
-
-  // Draw a leaf at the end point as a fuzzy elipse
-  setColour(fillAlpha);
-  ellipse(xi, yi + (maxLeafHeight / 8), random(5, maxLeafWidth), random(20, maxLeafHeight));
 }
 
 
@@ -153,6 +158,7 @@ function setColour(fAlpha) {
 
   // Get the corresponding dependency ratio (percentage) as an integer
   let p = parseInt(currentTable.getString(yearSlider.value() - 1960, country));
+  noStroke();
 
   // The lower the dependency, the greener the tree
   switch(true) {
