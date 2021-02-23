@@ -9,28 +9,35 @@
 
 //jshint esversion:6
 
-const N = 3;               // Number of vertex control points in the points array
+const N = 15;                         // Number of vertex control points in the points array
 
-let current = [], next;    // Current and next random point
-let percent = 0.5;         // lerp percentage
-let points = [];           // Array of fixed vertex control points
+let current = [], next, prev = 0;     // Current, next, and previous random point
+let percent = 0.5;                    // lerp percentage
+let points = [];                      // Array of fixed vertex control points
 
-let minHeight = 35,  maxHeight = 180;     // Min/max fractal height
+let minHeight = 35,  maxHeight = 180; // Min/max fractal height
 
 // General variables
 let afrTable, asiTable, eurTable, namTable, oceTable, samTable;
 let c1, c2;
 let continents, country;
 let currentTable, dependencyTable, populationTable;
+let icons = [];
 let isSlider = false;
 let legend;
+let midPoint, scale;
 let xOffset = [];
 let yearSlider;
 let yearStart = 1960, yearEnd = 2017;
 
 // Load dependency data tables
 function preload() {
-  icon = loadImage('../assets/icon.png');
+  icons[0] = loadImage('../assets/icon0.png');  // Asia
+  icons[1] = loadImage('../assets/icon5.png');  // Africa
+  icons[2] = loadImage('../assets/icon2.png');  // Europe
+  icons[3] = loadImage('../assets/icon3.png');  // North America
+  icons[4] = loadImage('../assets/icon4.png');  // Oceana
+  icons[5] = loadImage('../assets/icon5.png');  // South America
   legend = loadImage('../assets/legend.png');
   dependencyTable = loadTable('../assets/dependency-by-continent.csv', 'csv', 'header');
   populationTable = loadTable('../assets/population-by-continent.csv', 'csv', 'header');
@@ -46,9 +53,12 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
+  // Original work was on a 969 high pixel display
+  scale = height / 969.0;
+
   // Set background colours
-  c1 = color(36, 63, 255);
-  c2 = color (255, 144, 34);
+  c1 = color(0, 60, 129);
+  c2 = color (113, 207, 250);
 
   // Calculate number of icons (one per continent)
   continents = populationTable.getColumnCount() - 2;
@@ -56,13 +66,16 @@ function setup() {
   // Generate Slider(s)
   labels();
 
-  // Specify icon x offset positions (currently equal spacing)
-  xOffset[0] = 4 * width / (continents + 1);  // Asia
-  xOffset[1] = 6 * width / (continents + 1);  // Africa
-  xOffset[2] = 3 * width / (continents + 1);  // Europe
-  xOffset[3] = 1 * width / (continents + 1);  // North America
-  xOffset[4] = 5 * width / (continents + 1);  // Oceana
-  xOffset[5] = 2 * width / (continents + 1);  // South America
+  // Specify icon x offset and fractal y midPoint positions
+  let spacing = width * 0.81 / (continents - 1);
+  xOffset[0] = width * 0.1 + 3 * spacing;  // Asia
+  xOffset[1] = width * 0.1 + 5 * spacing;  // Africa
+  xOffset[2] = width * 0.1 + 2 * spacing;  // Europe
+  xOffset[3] = width * 0.11111;            // North America
+  xOffset[4] = width * 0.1 + 4 * spacing;  // Oceana
+  xOffset[5] = width * 0.1 + 1 * spacing;  // South America
+
+  midPoint = height / 4;
 
   // Create N equidistant vertex control points in a circle for each continent
   setPoints();
@@ -85,9 +98,14 @@ function draw() {
 
     for (let j = 0; j < 1000; j++) {
       next = floor(random(N));
+      while (next == prev) {
+        next = floor(random(N));
+      }
       current[i] = p5.Vector.lerp(current[i], points[i][next], percent);
       setColour();
       point(current[i].x, current[i].y);
+
+      prev = next;
     }
   }
 }
@@ -144,7 +162,7 @@ function setColour() {
 }
 
 
-// Create N equidistant vertex control points in a circle for each continent
+// Create N vertex control points in a circle for each continent
 function setPoints() {
 
   for (let i = 0; i < continents; i++) {
@@ -152,7 +170,7 @@ function setPoints() {
     points[i] = [];
 
     for (let j = 0; j < N; j++) {
-      let angle = (j * TWO_PI) / N + HALF_PI;
+      let angle = (j * TWO_PI) / N - HALF_PI;
 
       // Set the size of the fractal
       let v = p5.Vector.fromAngle(angle,
@@ -160,14 +178,14 @@ function setPoints() {
         16000000, 4500000000, width / 16, width / 8));
 
       // Set the position of the fractal midpoint
-      v.add(xOffset[i], height / 2);
+      v.add(xOffset[i], height / 4);
 
       // Add to points array
       points[i][j] = v;
     }
 
     // Select a current point
-    current[i] = createVector(xOffset[i], height / 2);
+    current[i] = createVector(xOffset[i], midPoint);
   }
 }
 
@@ -201,7 +219,13 @@ function drawIcon(i) {
       break;
   }
 
-  image(icon, xOffset[i] - icon.width / 2, height * 0.88 - icon.height);
+  // Draw the icons and scale them to fit the display size
+  image(icons[i], xOffset[i] - scale * icons[i].width / 2, height * 0.88 - scale * icons[i].height,
+    scale * icons[i].width, scale * icons[i].height);
+  stroke(0);
+
+  // Draw a line from the fractal to the image at the 48.7% pixal mark
+  line(xOffset[i], midPoint, xOffset[i], height * 0.88 - scale * icons[i].height * 0.487047);
   tint(255, 255);
 }
 
@@ -250,19 +274,21 @@ function labels() {
     }
 
     // Add a legend
-    fill(0);
-    image(legend, 0, 0.05 * height);
+    fill(0); stroke(0);
+    image(legend, 0.005 * width, 0.03 * height, scale * legend.width, scale * legend.height);
 
     // Label each icon with a continent name
-    textAlign(CENTER); textSize(16); textStyle(BOLD);
+    textAlign(CENTER); textSize(16); textStyle(NORMAL);
     for (let i = 0; i < continents; i++) {
       text(populationTable.columns[i + 1], xOffset[i], 0.91 * height);
     }
 
-    // Add slider title
-    textAlign(LEFT); textSize(12);
+    // Add title
+    fill(255); textAlign(LEFT); textSize(22);
     text('Age Dependency Ratio for ' + yearSlider.value(), width / 20,
-      height * 0.93);
+      height * 0.05);
+    textSize(12);
+    text('(Size of Fractal is Proportional to the Population)', width / 20, height * 0.07);
 
     // All slider markings
     fill('#0274FF'); textAlign(CENTER); textSize(10); textStyle(ITALIC);
