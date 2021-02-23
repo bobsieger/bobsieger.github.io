@@ -85,14 +85,14 @@ function draw() {
   randomSeed(99);
 
   // Draw a tree for each continent and use -90° so that each tree points up
-  noStroke();
+  // noStroke();
   for (let i = 0; i < continents; i++) {
 
     // Set the continent data to use for this tree
     setCurrentTable(i);
 
     // Add Rods of Asclepius
-    drawRod(i);
+    // drawRod(i);
 
     // Invoke a recursive tree function, mapping the population of each
     // continent for a given year to a minimum and maximum tree segment
