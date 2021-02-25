@@ -23,7 +23,7 @@ let c1, c2;
 let continents, country;
 let currentTable, dependencyTable, populationTable;
 let icons = [];
-let isSlider = false;
+let isSlider;
 let legend;
 let midPoint, scale;
 let xOffset = [];
@@ -53,9 +53,6 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
-  // Original work was on a 969 high pixel display
-  scale = height / 969.0;
-
   // Set background colours
   c1 = color(0, 60, 129);
   c2 = color (113, 207, 250);
@@ -63,25 +60,8 @@ function setup() {
   // Calculate number of icons (one per continent)
   continents = populationTable.getColumnCount() - 2;
 
-  // Generate Slider(s)
-  labels();
-
-  // Specify icon x offset and fractal y midPoint positions
-  let spacing = width * 0.81 / (continents - 1);
-  xOffset[0] = width * 0.1 + 3 * spacing;  // Asia
-  xOffset[1] = width * 0.1 + 5 * spacing;  // Africa
-  xOffset[2] = width * 0.1 + 2 * spacing;  // Europe
-  xOffset[3] = width * 0.11111;            // North America
-  xOffset[4] = width * 0.1 + 4 * spacing;  // Oceana
-  xOffset[5] = width * 0.1 + 1 * spacing;  // South America
-
-  midPoint = height / 4;
-
-  // Create N equidistant vertex control points in a circle for each continent
-  setPoints();
-
-  // Draw labels, sliders, and background
-  labels();
+  // Reusable setup
+  reSetup();
 }
 
 
@@ -311,4 +291,39 @@ function mouseReleased() {
   // The redraw() function makes draw() execute once
   labels();
   setPoints();
+}
+
+
+function reSetup() {
+  // Original work was on a 969 high pixel display
+  scale = height / 969.0;
+
+  // Generate Slider(s)
+  isSlider = false;
+  labels();
+
+  // Specify icon x offset and fractal y midPoint positions
+  let spacing = width * 0.81 / (continents - 1);
+  xOffset[0] = width * 0.1 + 3 * spacing;  // Asia
+  xOffset[1] = width * 0.1 + 5 * spacing;  // Africa
+  xOffset[2] = width * 0.1 + 2 * spacing;  // Europe
+  xOffset[3] = width * 0.11111;            // North America
+  xOffset[4] = width * 0.1 + 4 * spacing;  // Oceana
+  xOffset[5] = width * 0.1 + 1 * spacing;  // South America
+
+  midPoint = height / 4;
+
+  // Create N equidistant vertex control points in a circle for each continent
+  setPoints();
+
+  // Draw labels, sliders, and background
+  labels();
+}
+
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  background(255);
+  yearSlider.remove();
+  reSetup();
 }
